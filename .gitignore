@@ -1,0 +1,8 @@
+data/
+target/
+benchmark_results/
+SRF_2_original/
+epochs/
+pytorch_ssim/
+statistics/
+training_results/
