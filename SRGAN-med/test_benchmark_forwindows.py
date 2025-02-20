@@ -23,8 +23,11 @@ def main():
     UPSCALE_FACTOR = opt.upscale_factor
     MODEL_NAME = opt.model_name
 
-    results = {'Set5': {'psnr': [], 'ssim': []}, 'Set14': {'psnr': [], 'ssim': []}, 'BSD100': {'psnr': [], 'ssim': []},
-               'Urban100': {'psnr': [], 'ssim': []}, 'SunHays80': {'psnr': [], 'ssim': []}}
+    # 修改 results 字典的初始化
+    results = {
+        'IM': {'psnr': [], 'ssim': []},  # 对应 IM-0083-0001jpeg 等
+        'NORMAL2': {'psnr': [], 'ssim': []}  # 对应 NORMAL2-IM-0221-0001.jpeg 等
+    }
 
     model = Generator(UPSCALE_FACTOR).eval()
     if torch.cuda.is_available():
@@ -69,9 +72,15 @@ def main():
         utils.save_image(image, out_path + image_name.split('.')[0] + '_psnr_%.4f_ssim_%.4f.' % (psnr, ssim) +
                          image_name.split('.')[-1], padding=5)
 
+        # 获取前缀
+        if image_name.startswith('NORMAL2'):
+            prefix = 'NORMAL2'
+        else:
+            prefix = 'IM'  # 对于 IM-0083-0001jpeg 等，前缀是 IM
+
         # 保存 PSNR 和 SSIM 结果
-        results[image_name.split('_')[0]]['psnr'].append(psnr)
-        results[image_name.split('_')[0]]['ssim'].append(ssim)
+        results[prefix]['psnr'].append(psnr)
+        results[prefix]['ssim'].append(ssim)
 
     # 保存统计结果
     out_path = 'statistics/'
