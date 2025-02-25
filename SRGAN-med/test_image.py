@@ -3,18 +3,20 @@ import time
 
 import torch
 from PIL import Image
-from torch.autograd import Variable
+# from torch.autograd import Variable
 from torchvision.transforms import ToTensor, ToPILImage
 
 from model import Generator
 
 parser = argparse.ArgumentParser(description='Test Single Image')
-# 放大修改为默认为2
-parser.add_argument('--upscale_factor', default=2, type=int, help='super resolution upscale factor')
+# 放大修改为默认为4
+parser.add_argument('--upscale_factor', default=4, type=int, help='super resolution upscale factor')
 parser.add_argument('--test_mode', default='GPU', type=str, choices=['GPU', 'CPU'], help='using GPU or CPU')
 parser.add_argument('--image_name', type=str, help='test low resolution image name')
-# 默认修改为epoch_2_100.pth(G为生成器,D为判别器(只在训练时使用))
-parser.add_argument('--model_name', default='netG_epoch_2_100.pth', type=str, help='generator model epoch name')
+# 默认修改为epoch_4_55.pth(G为生成器,D为判别器(只在训练时使用))
+parser.add_argument('--model_name', default='netG_epoch_4_55.pth', type=str, help='generator model epoch name')
+# 尝试修改为epoch_2_50.pth(G为生成器,D为判别器(只在训练时使用))
+# parser.add_argument('--model_name', default='netG_epoch_2_50.pth', type=str, help='generator model epoch name')
 opt = parser.parse_args()
 
 UPSCALE_FACTOR = opt.upscale_factor
@@ -25,18 +27,20 @@ MODEL_NAME = opt.model_name
 model = Generator(UPSCALE_FACTOR).eval()
 if TEST_MODE:
     model.cuda()
-    model.load_state_dict(torch.load('epochs/' + MODEL_NAME))
+    model.load_state_dict(torch.load('epochs/' + MODEL_NAME, weights_only=True))
 else:
-    model.load_state_dict(torch.load('epochs/' + MODEL_NAME, map_location=lambda storage, loc: storage))
+    model.load_state_dict(torch.load('epochs/' + MODEL_NAME, map_location=lambda storage, loc: storage, weights_only=True))
 
 image = Image.open(IMAGE_NAME)
-image = Variable(ToTensor()(image), volatile=True).unsqueeze(0)
+with torch.no_grad():
+    image = ToTensor()(image).unsqueeze(0)
 if TEST_MODE:
     image = image.cuda()
 
-start = time.clock()
+start = time.perf_counter()
 out = model(image)
-elapsed = (time.clock() - start)
-print('cost' + str(elapsed) + 's')
+elapsed = (time.perf_counter() - start)
+print('cost ' + str(elapsed) + 's')
+
 out_img = ToPILImage()(out[0].data.cpu())
 out_img.save('out_srf_' + str(UPSCALE_FACTOR) + '_' + IMAGE_NAME)
