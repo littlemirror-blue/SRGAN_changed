@@ -6,3 +6,4 @@ epochs/
 pytorch_ssim/
 statistics/
 training_results/
+test_image_results/
