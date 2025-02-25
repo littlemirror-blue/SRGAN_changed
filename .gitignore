@@ -1,7 +1,7 @@
 data/
 target/
 benchmark_results/
-SRF_2_original/
+dataset_original()/
 epochs/
 pytorch_ssim/
 statistics/
