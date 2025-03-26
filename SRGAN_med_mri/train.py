@@ -18,8 +18,8 @@ from model import Generator, Discriminator
 parser = argparse.ArgumentParser(description='Train Super Resolution Models')
 # 用于指定训练图像的裁剪尺寸，默认为96
 parser.add_argument('--crop_size', default=96, type=int, help='training images crop size')
-# 用于指定超分辨率的放大因子，修改默认为2
-parser.add_argument('--upscale_factor', default=2, type=int, choices=[2, 4, 8],
+# 用于指定超分辨率的放大因子，修改默认为4
+parser.add_argument('--upscale_factor', default=4, type=int, choices=[2, 4, 8],
                     help='super resolution upscale factor')
 # 用于指定训练的轮数，默认为100
 parser.add_argument('--num_epochs', default=100, type=int, help='train epoch number')
