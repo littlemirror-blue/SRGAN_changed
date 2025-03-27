@@ -13,30 +13,45 @@ import pytorch_ssim
 from data_utils import TestDatasetFromFolder, display_transform
 from model import Generator
 
-def extract_key_from_filename(filename):
-    """从文件名中提取分类键：run-X_T1w_<processing>"""
-    parts = filename.split('_')
-    # 提取run编号(parts[2])、模态(parts[3])和处理方式(parts[4])
-    return f"{parts[2]}_{parts[3]}_{parts[4]}"
+def extract_key(image_name):
+    parts = image_name.split('_')
+    run = None
+    processing = None
+    
+    for part in parts:
+        if part.startswith('run-'):
+            run = part
+    
+    try:
+        t1w_index = parts.index('T1w')
+        if t1w_index + 1 < len(parts) and parts[t1w_index + 1] != 'slice':
+            processing = parts[t1w_index + 1]
+        else:
+            processing = 'T1w'
+    except ValueError:
+        processing = 'unknown'
+    
+    if run and processing:
+        return f"{run}_{processing}"
+    else:
+        return "unknown"
 
 def main():
     parser = argparse.ArgumentParser(description='Test Benchmark Datasets')
-    # 默认修改为epoch_4_22.pth(G为生成器,D为判别器(只在训练时使用))
-    #parser.add_argument('--model_name', default='netG_epoch_4_22.pth', type=str, help='generator model epoch name')
     # 放大修改为默认为8
     parser.add_argument('--upscale_factor', default=8, type=int, help='super resolution upscale factor')
-    # 默认修改为epoch_8_98.pth(G为生成器,D为判别器(只在训练时使用))
+    # 默认修改为epoch_2_18.pth(G为生成器,D为判别器(只在训练时使用))
+    #parser.add_argument('--model_name', default='netG_epoch_2_18.pth', type=str, help='generator model epoch name')
+    # 默认修改为epoch_4_22.pth(G为生成器,D为判别器(只在训练时使用))
+    #parser.add_argument('--model_name', default='netG_epoch_4_22.pth', type=str, help='generator model epoch name')
+    # 尝试修改为epoch_8_98.pth(G为生成器,D为判别器(只在训练时使用))
     parser.add_argument('--model_name', default='netG_epoch_8_98.pth', type=str, help='generator model epoch name')
     opt = parser.parse_args()
     UPSCALE_FACTOR = opt.upscale_factor
     MODEL_NAME = opt.model_name
 
-    # 预定义results字典，包含已知的处理类型
-    results = {
-        'run-02_T1w_offline_manual_withRef': {'psnr': [], 'ssim': []},
-        'run-02_T1w_biasCorrected': {'psnr': [], 'ssim': []},
-        'run-01_T1w_offline_manual_withRef': {'psnr': [], 'ssim': []}
-    }
+    # 动态初始化 results
+    results = {}
 
     model = Generator(UPSCALE_FACTOR).eval()
     if torch.cuda.is_available():
@@ -78,42 +93,29 @@ def main():
         utils.save_image(image, out_path + image_name.split('.')[0] + '_psnr_%.4f_ssim_%.4f.' % (psnr, ssim) +
                          image_name.split('.')[-1], padding=5)
 
-        # 获取分类键
-        key = extract_key_from_filename(image_name)
-        
-        # 保存结果到对应的类别
-        if key in results:
-            results[key]['psnr'].append(psnr)
-            results[key]['ssim'].append(ssim)
-        else:
-            print(f"Warning: Unexpected file type - {image_name}")
+        # 动态添加结果
+        prefix = extract_key(image_name)
+        if prefix not in results:
+            results[prefix] = {'psnr': [], 'ssim': []}
+        results[prefix]['psnr'].append(psnr)
+        results[prefix]['ssim'].append(ssim)
 
-    # 保存统计结果
     out_path = 'statistics/'
-    if not os.path.exists(out_path):
-        os.makedirs(out_path)
-        
     saved_results = {'psnr': [], 'ssim': []}
-    index_labels = []
-    
-    for key, metrics in results.items():
-        psnr = np.array(metrics['psnr'])
-        ssim = np.array(metrics['ssim'])
-        
-        if len(psnr) == 0 or len(ssim) == 0:
-            psnr_mean = 'No data'
-            ssim_mean = 'No data'
+    for item in results.values():
+        psnr = np.array(item['psnr'])
+        ssim = np.array(item['ssim'])
+        if (len(psnr) == 0) or (len(ssim) == 0):
+            psnr = 'No data'
+            ssim = 'No data'
         else:
-            psnr_mean = psnr.mean()
-            ssim_mean = ssim.mean()
-        
-        saved_results['psnr'].append(psnr_mean)
-        saved_results['ssim'].append(ssim_mean)
-        index_labels.append(key)
+            psnr = psnr.mean()
+            ssim = ssim.mean()
+        saved_results['psnr'].append(psnr)
+        saved_results['ssim'].append(ssim)
 
-    data_frame = pd.DataFrame(saved_results, index=index_labels)
-    data_frame.index.name = 'DatasetType'
-    data_frame.to_csv(out_path + 'srf_' + str(UPSCALE_FACTOR) + '_test_results.csv')
+    data_frame = pd.DataFrame(saved_results, results.keys())
+    data_frame.to_csv(out_path + 'srf_' + str(UPSCALE_FACTOR) + '_test_results.csv', index_label='DataSet')
 
 if __name__ == '__main__':
     main()
