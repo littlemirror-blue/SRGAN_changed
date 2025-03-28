@@ -32,7 +32,7 @@ def process_and_distribute_images(original_dir, data_dir):
     """
     处理并分发图像到指定目录。
     参数:
-        original_dir (str): 原始图像目录，例如 'C:/.../data/1all_slices'
+        original_dir (str): 原始图像目录，例如 'C:/.../data/all_slices'
         data_dir (str): 数据基础路径，例如 'C:/.../data'
     """
     # 定义目录路径
@@ -57,13 +57,13 @@ def process_and_distribute_images(original_dir, data_dir):
     all_files.sort()  # 排序以确保一致性
 
     # 验证文件数量
-    if len(all_files) < 8085:
-        raise ValueError(f"图像数量不足，需要8085张，实际有{len(all_files)}张")
+    if len(all_files) < 22763:
+        raise ValueError(f"图像数量不足，需要22763张，实际有{len(all_files)}张")
     
     # 分割为train, val, test
-    train_files = all_files[:6885]
-    val_files = all_files[6885:6885+400]
-    test_files = all_files[6885+400:6885+400+800]
+    train_files = all_files[:19380]
+    val_files = all_files[19380:19380+1127]
+    test_files = all_files[19380+1127:19380+1127+2256]
 
     # 处理train和val：仅保存HR图像
     for files, dest_dir in [(train_files, train_dir), (val_files, val_dir)]:
@@ -101,6 +101,6 @@ def process_and_distribute_images(original_dir, data_dir):
 
 if __name__ == "__main__":
     # 设置路径
-    data_dir = r'C:\Users\13550\Downloads\SRGAN_changed\SRGAN_med_mri\data'
-    original_dir = os.path.join(data_dir, '1all_slices')
+    data_dir = r'C:\Users\13550\Downloads\SRGAN_changed\SRGAN_med_CT\data'
+    original_dir = os.path.join(data_dir, 'all_slices')
     process_and_distribute_images(original_dir, data_dir)
