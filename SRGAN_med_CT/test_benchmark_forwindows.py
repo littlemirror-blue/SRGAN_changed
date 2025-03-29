@@ -14,38 +14,29 @@ from data_utils import TestDatasetFromFolder, display_transform
 from model import Generator
 
 def extract_key(image_name):
-    parts = image_name.split('_')
-    run = None
-    processing = None
-    
-    for part in parts:
-        if part.startswith('run-'):
-            run = part
-    
-    try:
-        t1w_index = parts.index('T1w')
-        if t1w_index + 1 < len(parts) and parts[t1w_index + 1] != 'slice':
-            processing = parts[t1w_index + 1]
+    """从图像名称中提取患者编号，去掉前缀'1.3.6.1.4.1.14519.5.2.1.6279.6001.'"""
+    prefix = "1.3.6.1.4.1.14519.5.2.1.6279.6001."
+    slice_index = image_name.find("_slice_")
+    if slice_index != -1:
+        full_patient_id = image_name[:slice_index]  # 提取患者编号部分
+        if full_patient_id.startswith(prefix):
+            key = full_patient_id[len(prefix):]  # 去掉前缀
         else:
-            processing = 'T1w'
-    except ValueError:
-        processing = 'unknown'
-    
-    if run and processing:
-        return f"{run}_{processing}"
+            key = full_patient_id  # 如果没有前缀，使用完整患者编号
     else:
-        return "unknown"
+        key = image_name  # 如果没有'_slice_'，使用整个名称
+    return key
 
 def main():
     parser = argparse.ArgumentParser(description='Test Benchmark Datasets')
     # 放大修改为默认为8
     parser.add_argument('--upscale_factor', default=8, type=int, help='super resolution upscale factor')
-    # 默认修改为epoch_2_18.pth(G为生成器,D为判别器(只在训练时使用))
-    #parser.add_argument('--model_name', default='netG_epoch_2_18.pth', type=str, help='generator model epoch name')
-    # 默认修改为epoch_4_22.pth(G为生成器,D为判别器(只在训练时使用))
-    #parser.add_argument('--model_name', default='netG_epoch_4_22.pth', type=str, help='generator model epoch name')
-    # 尝试修改为epoch_8_98.pth(G为生成器,D为判别器(只在训练时使用))
-    parser.add_argument('--model_name', default='netG_epoch_8_98.pth', type=str, help='generator model epoch name')
+    # 默认修改为epoch_2_98.pth(G为生成器,D为判别器(只在训练时使用))
+    #parser.add_argument('--model_name', default='netG_epoch_2_98.pth', type=str, help='generator model epoch name')
+    # 默认修改为epoch_4_65.pth(G为生成器,D为判别器(只在训练时使用))
+    #parser.add_argument('--model_name', default='netG_epoch_4_65.pth', type=str, help='generator model epoch name')
+    # 尝试修改为epoch_8_41.pth(G为生成器,D为判别器(只在训练时使用))
+    parser.add_argument('--model_name', default='netG_epoch_8_41.pth', type=str, help='generator model epoch name')
     opt = parser.parse_args()
     UPSCALE_FACTOR = opt.upscale_factor
     MODEL_NAME = opt.model_name
@@ -86,15 +77,18 @@ def main():
         psnr = 10 * log10(1 / mse)
         ssim = pytorch_ssim.ssim(sr_image, hr_image).item()
 
+        # 使用患者编号和切片编号保存图像
+        key = extract_key(image_name)
+        slice_part = image_name.split('_slice_')[1] if '_slice_' in image_name else 'unknown'
+        save_name = f"{out_path}{key}_slice_{slice_part.split('.')[0]}_psnr_{psnr:.4f}_ssim_{ssim:.4f}.png"
         test_images = torch.stack(
             [display_transform()(hr_restore_img.squeeze(0)), display_transform()(hr_image.data.cpu().squeeze(0)),
              display_transform()(sr_image.data.cpu().squeeze(0))])
         image = utils.make_grid(test_images, nrow=3, padding=5)
-        utils.save_image(image, out_path + image_name.split('.')[0] + '_psnr_%.4f_ssim_%.4f.' % (psnr, ssim) +
-                         image_name.split('.')[-1], padding=5)
+        utils.save_image(image, save_name, padding=5)
 
         # 动态添加结果
-        prefix = extract_key(image_name)
+        prefix = key  # 使用新的患者编号作为键
         if prefix not in results:
             results[prefix] = {'psnr': [], 'ssim': []}
         results[prefix]['psnr'].append(psnr)
