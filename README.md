@@ -4,9 +4,9 @@ This repository contains a collection of Super-Resolution Generative Adversarial
 
 ## Projects Overview
 
-- **SRGAN-med**: General medical image super-resolution implementation(xray led png image)
-- **SRGAN_med_mri**: SRGAN implementation specifically optimized for MRI images
-- **SRGAN_med_CT**: SRGAN implementation specifically optimized for CT images
+- **SRGAN-med**: General medical image super-resolution implementation(xray led png image)[readme](./SRGAN-med/README.md)
+- **SRGAN_med_mri**: SRGAN implementation specifically optimized for MRI images [readme](./SRGAN_med_mri/README.md)
+- **SRGAN_med_CT**: SRGAN implementation specifically optimized for CT images [readme](./SRGAN_med_CT/README.md)
 
 Each project adapts the SRGAN architecture to address the unique characteristics and challenges of different medical imaging modalities.
 
