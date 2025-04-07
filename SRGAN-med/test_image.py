@@ -10,13 +10,13 @@ from model import Generator
 
 parser = argparse.ArgumentParser(description='Test Single Image')
 # 放大修改为默认为8
-parser.add_argument('--upscale_factor', default=8, type=int, help='super resolution upscale factor')
+parser.add_argument('--upscale_factor', default=2, type=int, help='super resolution upscale factor')
 parser.add_argument('--test_mode', default='GPU', type=str, choices=['GPU', 'CPU'], help='using GPU or CPU')
 parser.add_argument('--image_name', type=str, help='test low resolution image name')
 # 默认修改为epoch_8_100.pth(G为生成器,D为判别器(只在训练时使用))
-parser.add_argument('--model_name', default='netG_epoch_8_100.pth', type=str, help='generator model epoch name')
-# 尝试修改为epoch_2_50.pth(G为生成器,D为判别器(只在训练时使用))
-# parser.add_argument('--model_name', default='netG_epoch_2_50.pth', type=str, help='generator model epoch name')
+#parser.add_argument('--model_name', default='netG_epoch_8_100.pth', type=str, help='generator model epoch name')
+# 尝试修改为epoch_2_52.pth(G为生成器,D为判别器(只在训练时使用))
+parser.add_argument('--model_name', default='netG_epoch_2_52.pth', type=str, help='generator model epoch name')
 opt = parser.parse_args()
 
 UPSCALE_FACTOR = opt.upscale_factor
